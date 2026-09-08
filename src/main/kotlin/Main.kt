@@ -1,71 +1,50 @@
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 
 val JSON_MEDIA = "application/json; charset=utf-8".toMediaType()
 val httpClient = OkHttpClient()
 const val COUCHDB_URL = "http://localhost:5984"
 const val DB_NAME = "universidad"
-// EXPO ESTANDAR (cada maquina): admin / password — coincide con docker run -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=password
-// Si usas el servidor de casa (~/servidores/couchdb usa fernandojose), cambia "password" por "fernandojose".
+
+// EXPO ESTANDAR (todas las maquinas): admin / password.
+// Coincide con: docker run -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=password
+// Casa Fernando (~/servidores/couchdb usa fernandojose): cambia "password" por "fernandojose".
 val AUTH_CREDENTIALS = Credentials.basic("admin", "password")
 
 fun main() {
-    // SOLO DEMO AISLADA FERNANDO
-    val docId = "est_2026_01"
-
-    val putDbRequest = Request.Builder()
-        .url("$COUCHDB_URL/$DB_NAME")
-        .put("{}".toRequestBody(JSON_MEDIA))
-        .header("Authorization", AUTH_CREDENTIALS)
-        .build()
-    httpClient.newCall(putDbRequest).execute().use { resp ->
-        println("PUT DB -> ${resp.code}")
+    println("====================================================")
+    println(" DEMOSTRACION: KOTLIN + APACHE COUCHDB + DOCKER ")
+    println("====================================================\n")
+    // 1. FASE DE INFRAESTRUCTURA (Rodrigo)
+    RodrigoModule.crearBaseDatos()
+    val documentoId = "est_2026_01"
+    // 2. FASE DE CREACION (Mario)
+    val revisionV1 = MarioModule.crearDocumento(
+        id = documentoId,
+        nombre = "Juan Perez",
+        carrera = "Ingenieria de Sistemas",
+        edad = 22
+    )
+    // Si el doc ya existia (seed importada), Mario muestra el 409 y seguimos con la rev vigente.
+    val revParaLeer = revisionV1.ifEmpty {
+        AlbertoModule.obtenerRevision(documentoId)
     }
-
-    var revActual: String? = null
-    val getRequest = Request.Builder()
-        .url("$COUCHDB_URL/$DB_NAME/$docId")
-        .get()
-        .header("Authorization", AUTH_CREDENTIALS)
-        .build()
-    httpClient.newCall(getRequest).execute().use { resp ->
-        if (resp.code == 200) {
-            val body = JSONObject(resp.body!!.string())
-            revActual = body.getString("_rev")
-            println("Doc $docId ya existe, rev=$revActual")
-        }
+    // 3. FASE DE LECTURA Y CONSULTAS (Alberto)
+    AlbertoModule.leerDocumentoPorId(documentoId)
+    AlbertoModule.consultarPorCarrera("Ingenieria de Sistemas")
+    // 4. FASE DE MODIFICACION, MVCC Y BORRADO (Fernando)
+    val revBase = revisionV1.ifEmpty { revParaLeer }
+    val revisionV2 = FernandoModule.actualizarDocumento(
+        id = documentoId,
+        revActual = revBase,
+        nuevoNombre = "Juan Perez Actualizado",
+        nuevaEdad = 23
+    )
+    if (revisionV2.isNotEmpty()) {
+        FernandoModule.eliminarDocumento(documentoId, revisionV2)
     }
-
-    if (revActual == null) {
-        val temporal = JSONObject()
-            .put("nombre", "Temporal Fernando")
-            .put("carrera", "Ingenieria de Sistemas")
-            .put("edad", 20)
-            .toString()
-        val putDocRequest = Request.Builder()
-            .url("$COUCHDB_URL/$DB_NAME/$docId")
-            .put(temporal.toRequestBody(JSON_MEDIA))
-            .header("Authorization", AUTH_CREDENTIALS)
-            .build()
-        httpClient.newCall(putDocRequest).execute().use { resp ->
-            val bodyStr = resp.body!!.string()
-            println("PUT doc temporal -> ${resp.code} $bodyStr")
-            if (resp.code == 201) {
-                revActual = JSONObject(bodyStr).getString("rev")
-            }
-        }
-    }
-
-    if (revActual != null) {
-        val nuevaRev = FernandoModule.actualizarDocumento(docId, revActual!!, "Fernando Actualizado", 22)
-        println("actualizarDocumento -> nuevaRev=$nuevaRev")
-        val revParaEliminar = if (nuevaRev.isNotEmpty()) nuevaRev else revActual!!
-        FernandoModule.eliminarDocumento(docId, revParaEliminar)
-    } else {
-        println("No se pudo obtener rev para demo aislada")
-    }
+    println("\n====================================================")
+    println(" DEMOSTRACION FINALIZADA CON EXITO ")
+    println("====================================================")
 }
