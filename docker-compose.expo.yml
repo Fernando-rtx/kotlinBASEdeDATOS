@@ -1,0 +1,9 @@
+services:
+  couchdb:
+    image: couchdb:3
+    container_name: couchdb-server
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: password
+    ports:
+      - "5984:5984"
