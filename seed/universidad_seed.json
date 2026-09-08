@@ -1,0 +1,32 @@
+{
+  "alumno1": {
+    "nombre": "Ana",
+    "carrera": "Ingenieria en Sistemas",
+    "semestre": 5
+  },
+  "alumno2": {
+    "nombre": "Carlos",
+    "carrera": "Medicina",
+    "semestre": 3
+  },
+  "alumno3": {
+    "nombre": "Maria",
+    "carrera": "Derecho",
+    "semestre": 7
+  },
+  "est_2026_01": {
+    "carrera": "Ingenieria de Sistemas",
+    "edad": 22,
+    "nombre": "Juan Perez"
+  },
+  "est_2026_02": {
+    "carrera": "Ingenieria de Sistemas",
+    "edad": 21,
+    "nombre": "Maria Lopez"
+  },
+  "est_2026_03": {
+    "carrera": "Medicina",
+    "edad": 23,
+    "nombre": "Carlos Ruiz"
+  }
+}
