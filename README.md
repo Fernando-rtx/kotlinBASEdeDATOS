@@ -25,6 +25,7 @@ Minuta de show: `docs/00-orden-expo.md`.
 - `docs/06-referencia-curl.md` — chuleta curl 1 página.
 - `docs/07-preguntas-jurado.md` — 14 preguntas probables con respuesta corta (leer antes de exponer).
 - `docs/08-glosario.md` — términos en una línea.
+- `docs/09-zed.md` — flujo con Zed como IDE (terminal, wrapper, extensión Kotlin).
 
 ## Setup por máquina (cada quien en la suya, 5 min)
 ```bash
@@ -37,9 +38,11 @@ curl -u admin:password http://localhost:5984/
 # 2. Proyecto
 git clone https://github.com/Fernando-rtx/kotlinBASEdeDATOS.git
 cd kotlinBASEdeDATOS
-# Opción A (recomendada): abrir en IntelliJ como proyecto Gradle (usa gradle/wrapper/gradle-wrapper.properties, Gradle 9 + JDK 21).
-# Opción B: con Gradle instalado: gradle wrapper --gradle-version 9.0.0 && ./gradlew run
 ```
+**Correrlo:**
+- **IntelliJ:** abrir como proyecto Gradle y botón Run en `Main.kt`.
+- **Zed/VSCode/terminal:** `./gradlew run` (ver `docs/09-zed.md` si falta el wrapper jar).
+
 Fauxton: `http://localhost:5984/_utils` — `admin/password`.
 
 ## Semilla opcional (BD con todo ya hecho)
@@ -62,7 +65,7 @@ build.gradle.kts     # kotlin 2.2.0, okhttp:4.12.0, json:20240303, toolchain 21
 docker-compose.expo.yml  # alternativa al docker run (admin/password)
 seed/                # BD ejemplo importable
 guias/               # guion palabra por palabra por integrante
-docs/                # fichas, checklist, preguntas, glosario
+docs/                # fichas, checklist, preguntas, glosario, Zed
 ```
 
 ## Reglas de la expo
