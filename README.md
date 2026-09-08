@@ -1,52 +1,57 @@
-# Expo Kotlin + CouchDB — Guía por máquina (5 min)
+# Kotlin + Apache CouchDB + Docker — Expo completa
 
-Cada integrante replica esto en SU propia laptop. No se comparte máquina.
-Solo se muestra cómo se hizo.
+Demo en vivo: app Kotlin/JVM (OkHttp) habla con CouchDB 3.x en Docker por REST/JSON.
+Sin JDBC, sin driver pesado: `GET/PUT/POST/DELETE` + Basic Auth + MVCC con `_rev`.
 
-## 1. Requisitos por máquina
-- Docker + Java 17+ (probado: Gradle 9 + Kotlin 2.2 + toolchain 21).
-- Navegador para Fauxton.
+## Equipo y orden (14 min total aprox)
+| # | Quién | Bloque | Tiempo | Entrega en vivo |
+|---|-------|--------|--------|-----------------|
+| 1 | Rodrigo | Infra, Docker, fundamentos CouchDB | 3 min | `docker run`, `curl`, Fauxton, `PUT /universidad` 201/412 |
+| 2 | Mario | Kotlin/Gradle, Auth, CREATE | 3.5 min | `build.gradle.kts`, `Credentials.basic`, `PUT /universidad/est_2026_01` 201 + `rev 1-...` |
+| 3 | Alberto | READ por ID + Mango `_find` | 3.5 min | `GET` O(1) + `POST _find` con `$eq`, parseo `JSONObject` |
+| 4 | Fernando | MVCC, UPDATE 409, DELETE tombstone | 4 min | `PUT` con `_rev` → `2-...`, `409` con rev vieja, `DELETE ?rev=` → `200` |
 
-## 2. Levantar CouchDB (2 min) — igual en todas las máquinas
+Detalle palabra-por-palabra y comandos: `docs/01-rodrigo.md`, `02-mario.md`, `03-alberto.md`, `04-fernando.md`.
+Checklist + fallos: `docs/05-checklist-troubleshooting.md`. Chuleta curl: `docs/06-referencia-curl.md`.
+
+## Setup por máquina (cada quien en la suya, 5 min)
 ```bash
+# 1. Docker CouchDB (igual en todas)
 docker run -d --name couchdb-server -p 5984:5984 \
-  -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=password \
-  couchdb:latest
-# o: docker compose -f docker-compose.expo.yml up -d
+  -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=password couchdb:latest
 curl -u admin:password http://localhost:5984/
 # -> {"couchdb":"Welcome","version":"3..."}
-```
-Fauxton: `http://localhost:5984/_utils` user `admin` / `password`.
 
-Crear BD (lo hace Rodrigo en vivo, pero déjala lista):
-```bash
-curl -u admin:password -X PUT http://localhost:5984/universidad
-# 201 creada, 412 ya existía
-```
-
-## 3. Proyecto Kotlin (2 min)
-```bash
+# 2. Proyecto
 git clone https://github.com/Fernando-rtx/kotlinBASEdeDATOS.git
 cd kotlinBASEdeDATOS
-# Abrir en IntelliJ como proyecto Gradle o usar Gradle 9 + JDK 21:
-./gradlew run  # si el wrapper no trae jar, genera con `gradle wrapper --gradle-version 9.0.0`
+# Requiere Gradle 9 + JDK 21 (el wrapper no incluye el jar; abre en IntelliJ o genera wrapper)
+./gradlew run
 ```
-`build.gradle.kts` ya trae `okhttp:4.12.0` + `json:20240303`.
-`Main.kt` usa `Credentials.basic("admin","password")`.
+Fauxton: `http://localhost:5984/_utils` — `admin/password`.
 
-## 4. Qué muestra cada uno (solo mostrar, ya todo hecho)
-- **Rodrigo:** `docker ps`, `curl`, Fauxton, `PUT /universidad` -> 201/412.
-- **Mario:** `PUT /universidad/est_2026_01` -> 201 + `rev 1-...`.
-- **Alberto:** `GET /universidad/est_2026_01` + `POST /universidad/_find`.
-- **Fernando:** `PUT` con `_rev` -> `2-...`, reintento con rev vieja -> `409`, `DELETE ?rev=` -> `200`.
-
-## 5. Dejar limpio antes de exponer
+## Semilla opcional (BD con todo ya hecho)
 ```bash
-curl -u admin:password http://localhost:5984/universidad/est_2026_01
-# si da 200, saca _rev y borra:
-curl -u admin:password -X DELETE "http://localhost:5984/universidad/est_2026_01?rev=<rev>"
+./seed/import.sh http://localhost:5984 admin password
+```
+Carga `universidad` con `est_2026_01/02/03` + `alumno1..3`. Mango `Ingenieria de Sistemas` devuelve 2.
+OJO expo: si importas la semilla, el CREATE de Mario dará `409` (ya existe) en vez de `201`.
+Para el directo limpio, deja `est_2026_01` en `404` (ver `seed/README.md`).
+
+## Estructura código
+```
+src/main/kotlin/
+  Main.kt            # orquesta las 4 fases
+  RodrigoModule.kt   # crearBaseDatos() PUT /universidad
+  MarioModule.kt     # crearDocumento() PUT /universidad/id
+  AlbertoModule.kt   # leerDocumentoPorId() GET + consultarPorCarrera() POST _find + obtenerRevision()
+  FernandoModule.kt  # actualizarDocumento() PUT con _rev + eliminarDocumento() DELETE ?rev=
+build.gradle.kts     # kotlin 2.2.0, okhttp:4.12.0, json:20240303, toolchain 21
+docker-compose.expo.yml  # alternativa al docker run (admin/password)
+seed/                # BD ejemplo importable
 ```
 
-## Nota casa vs expo
-- Expo estándar: `admin/password`.
-- Casa Fernando (`~/servidores/couchdb`): `admin/fernandojose`. Cambia una línea en `Main.kt`.
+## Reglas de la expo
+- Cada uno cierra nombrando al siguiente ("...y le paso a Mario").
+- Proyectan consola + Fauxton lado a lado.
+- Credenciales SIEMPRE `admin/password` en expo. Casa Fernando usa `fernandojose` (ver `Main.kt`).
