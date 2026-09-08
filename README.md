@@ -11,8 +11,20 @@ Sin JDBC, sin driver pesado: `GET/PUT/POST/DELETE` + Basic Auth + MVCC con `_rev
 | 3 | Alberto | READ por ID + Mango `_find` | 3.5 min | `GET` O(1) + `POST _find` con `$eq`, parseo `JSONObject` |
 | 4 | Fernando | MVCC, UPDATE 409, DELETE tombstone | 4 min | `PUT` con `_rev` → `2-...`, `409` con rev vieja, `DELETE ?rev=` → `200` |
 
-Detalle palabra-por-palabra y comandos: `docs/01-rodrigo.md`, `02-mario.md`, `03-alberto.md`, `04-fernando.md`.
-Checklist + fallos: `docs/05-checklist-troubleshooting.md`. Chuleta curl: `docs/06-referencia-curl.md`.
+Minuta de show: `docs/00-orden-expo.md`.
+
+## Guías individuales palabra por palabra (cada uno abre SOLO la suya)
+- `guias/rodrigo.md` — qué decir y teclear, código línea por línea, fallos.
+- `guias/mario.md` — Gradle, Auth, CREATE 201/plan B 409.
+- `guias/alberto.md` — GET O(1), Mango 2 docs, parseo, puente `_rev`.
+- `guias/fernando.md` — MVCC, UPDATE, 409 forzado, DELETE, cierre literal.
+
+## Referencia técnica
+- `docs/01-rodrigo.md`, `02-mario.md`, `03-alberto.md`, `04-fernando.md` — fichas por bloque.
+- `docs/05-checklist-troubleshooting.md` — checklist día antes + 10 min antes.
+- `docs/06-referencia-curl.md` — chuleta curl 1 página.
+- `docs/07-preguntas-jurado.md` — 14 preguntas probables con respuesta corta (leer antes de exponer).
+- `docs/08-glosario.md` — términos en una línea.
 
 ## Setup por máquina (cada quien en la suya, 5 min)
 ```bash
@@ -25,8 +37,8 @@ curl -u admin:password http://localhost:5984/
 # 2. Proyecto
 git clone https://github.com/Fernando-rtx/kotlinBASEdeDATOS.git
 cd kotlinBASEdeDATOS
-# Requiere Gradle 9 + JDK 21 (el wrapper no incluye el jar; abre en IntelliJ o genera wrapper)
-./gradlew run
+# Opción A (recomendada): abrir en IntelliJ como proyecto Gradle (usa gradle/wrapper/gradle-wrapper.properties, Gradle 9 + JDK 21).
+# Opción B: con Gradle instalado: gradle wrapper --gradle-version 9.0.0 && ./gradlew run
 ```
 Fauxton: `http://localhost:5984/_utils` — `admin/password`.
 
@@ -49,6 +61,8 @@ src/main/kotlin/
 build.gradle.kts     # kotlin 2.2.0, okhttp:4.12.0, json:20240303, toolchain 21
 docker-compose.expo.yml  # alternativa al docker run (admin/password)
 seed/                # BD ejemplo importable
+guias/               # guion palabra por palabra por integrante
+docs/                # fichas, checklist, preguntas, glosario
 ```
 
 ## Reglas de la expo
